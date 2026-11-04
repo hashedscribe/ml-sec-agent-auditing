@@ -6,12 +6,14 @@ from load import declared, used
 
 load_dotenv()
 
-NAME = "ArkhAngelLifeJiggy/Open-SWE-Traces"
-PATH = "sample.jsonl"
-N = 100
+NAME = "nvidia/Open-SWE-Traces"
+CONFIG = "v2.0"
+SPLIT = "claudecode"
+N = 1000
+PATH = f"sample_{CONFIG}_{SPLIT}.jsonl"
 
 if not os.path.exists(PATH):
-    ds = load_dataset(NAME, "v1.0", split="openhands", streaming=True)
+    ds = load_dataset(NAME, CONFIG, split=SPLIT, streaming=True)
     with open(PATH, "w", encoding="utf-8") as f:
         for i, row in enumerate(ds):
             if i >= N:
@@ -30,4 +32,4 @@ for row in rows:
             never[name] += 1
 
 for name, n in seen.most_common():
-    print(f"{name:22} unused in {never[name]:4}/{n:4}")
+    print(f"{name:22} unused in {never[name]:4}/{n:4}  ({never[name]/n:.0%})")
