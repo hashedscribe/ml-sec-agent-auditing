@@ -91,7 +91,7 @@ counts, per_row = get_command_count(PATH)
 total = sum(counts.values())
 print(f"{total} commands, {len(counts)} distinct heads\n")
 
-# get the 30 most common commands snad their 
+# get the 30 most common commands and percentage
 for h, n in counts.most_common(30):
     print(f"{h:28} {n:7}  ({n/total:.1%})")
 
