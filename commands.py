@@ -66,22 +66,27 @@ def heads(cmd):
             if h:
                 yield h
 
+def get_command_count(path):
+    rows = [json.loads(l) for l in open(path, encoding="utf-8")]
+    print(f"{len(rows)} rows")
 
-rows = [json.loads(l) for l in open(PATH, encoding="utf-8")]
-print(f"{len(rows)} rows")
+    # faster than plain dict for large datasets
+    counts = Counter()
+    per_row = []
 
-# faster than plain dict for large datasets
-counts = Counter()
-per_row = []
+    for row in rows:
+        seen = set()
+        for cmd in bash_commands(row):
+            for h in heads(cmd):
+                counts[h] += 1
+                seen.add(h)
+        if seen:
+            per_row.append(len(seen))
+    return (counts, per_row)
 
-for row in rows:
-    seen = set()
-    for cmd in bash_commands(row):
-        for h in heads(cmd):
-            counts[h] += 1
-            seen.add(h)
-    if seen:
-        per_row.append(len(seen))
+counts, per_row = get_command_count(PATH)
+
+# --------------------------- prelim summary stats --------------------------- #
 
 total = sum(counts.values())
 print(f"{total} commands, {len(counts)} distinct heads\n")

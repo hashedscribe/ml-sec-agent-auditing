@@ -1,11 +1,11 @@
 import json, os
-from collections import Counter
 from dotenv import load_dotenv
 from datasets import load_dataset
-from load import declared, used
+from commands import get_command_count
 
 load_dotenv()
 
+# --------------------------- fetching data from hf -------------------------- #
 NAME = "nvidia/Open-SWE-Traces"
 CONFIG = "v2.0"
 SPLIT = "claudecode"
@@ -19,6 +19,7 @@ if not os.path.exists(PATH):
             if i >= N:
                 break
             f.write(json.dumps(row) + "\n")
+
 
 rows = [json.loads(l) for l in open(PATH, encoding="utf-8")]
 print(len(rows), "rows")
