@@ -1,0 +1,7 @@
+network:    [curl, wget, nc, ssh, scp, rsync, ftp]
+install:    [pip, pip3, npm, apt, apt-get, yum, brew, conda, poetry, uv]
+privilege:  [sudo, su, chmod, chown, chgrp, setcap]
+destructive: [rm, dd, mkfs, shred, truncate]
+execmeta:   [eval, exec, source, xargs, env]
+publish:    [git]
+interpreter: [python, python3, node, sh, bash, perl, ruby]
