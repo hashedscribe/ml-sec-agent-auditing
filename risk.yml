@@ -43,6 +43,7 @@ test_lint:
 
 vcs:
   # Read is harmless; push, remote, config are not. Needs subcommand rules.
+  # TODO subrules for vcs
   [git, hg, svn]
 
 install:

@@ -90,13 +90,21 @@ def get_command_count(path):
 def non_evaluated_commands(counts, risk):
     known = {c for cmds in risk.values() for c in cmds}
     return {h: n for h, n in counts.items() if h not in known}
+
+def evaluated_commands(counts, risk):
+    return {
+        cat: {c: counts.get(c, 0) for c in cmds}
+        for cat, cmds in risk.items()
+    }
         
 counts, per_row = get_command_count(PATH)
+
+# ----------------------------- missing commands ----------------------------- #
 
 unknown = non_evaluated_commands(counts, RISK)
 for h, n in sorted(unknown.items(), key=lambda p: -p[1]):
     if n >= 20:
-        print(f"{h:24}           {n:6}")
+        print(f"{h:24}  {n:6}")
         
 junk = sum(1 for n in unknown.values() if n <= 2)
 print(f"{junk}/{len(unknown)} unclassified heads appear ≤2 times")

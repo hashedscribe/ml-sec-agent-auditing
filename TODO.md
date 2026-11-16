@@ -6,3 +6,4 @@
 # general
 - generating file for updated permissions
 - split data for "session" adjustments ?
+- sub rules for vcs
