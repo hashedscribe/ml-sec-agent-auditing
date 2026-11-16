@@ -87,11 +87,11 @@ def get_command_count(path):
             per_row.append(len(seen))
     return (counts, per_row)
 
-def non_evaluated_commands(counts, risk):
+def non_sorted_commands(counts, risk):
     known = {c for cmds in risk.values() for c in cmds}
     return {h: n for h, n in counts.items() if h not in known}
 
-def evaluated_commands(counts, risk):
+def sorted_commands(counts, risk):
     return {
         cat: {c: counts.get(c, 0) for c in cmds}
         for cat, cmds in risk.items()
@@ -101,13 +101,27 @@ counts, per_row = get_command_count(PATH)
 
 # ----------------------------- missing commands ----------------------------- #
 
-unknown = non_evaluated_commands(counts, RISK)
+unknown = non_sorted_commands(counts, RISK)
 for h, n in sorted(unknown.items(), key=lambda p: -p[1]):
     if n >= 20:
         print(f"{h:24}  {n:6}")
         
 junk = sum(1 for n in unknown.values() if n <= 2)
 print(f"{junk}/{len(unknown)} unclassified heads appear ≤2 times")
+
+free_deny = []
+
+for cat, cmds in RISK.items():
+    # print(f"\n{cat}")
+    for c in sorted(cmds, key=lambda x: counts.get(x, 0)):
+        n = counts.get(x := c, 0)
+        mark = "FREE DENY" if n == 0 else ""
+        # print(f"  {c:12} {n:6} calls  {mark}")
+        if n == 0:
+             free_deny.append(c)
+        
+print("\n",free_deny,"\n")
+    
 
 # --------------------------- prelim summary stats --------------------------- #
 
