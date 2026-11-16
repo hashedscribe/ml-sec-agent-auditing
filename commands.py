@@ -61,8 +61,11 @@ def heads(cmd):
             continue
         parts = seg.split()
         while parts and ("=" in parts[0] or parts[0] in PREFIX):
+            if parts[0] in PREFIX:
+                yield parts[0]          # count the wrapper
             parts = parts[1:]
         if parts and parts[0] == "timeout":
+            yield "timeout"
             parts = parts[2:]
         if parts:
             h = parts[0].strip("()[]{}'\"`")
