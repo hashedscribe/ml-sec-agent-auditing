@@ -1,6 +1,9 @@
 import json, re, shlex
 from collections import Counter
 from statistics import median
+import yaml
+
+RISK = yaml.safe_load(open("./risk.yml"))
 
 PATH = "samples/sample_v2.0_claudecode.jsonl"
 THRESH = 0.90
@@ -84,7 +87,19 @@ def get_command_count(path):
             per_row.append(len(seen))
     return (counts, per_row)
 
+def non_evaluated_commands(counts, risk):
+    known = {c for cmds in risk.values() for c in cmds}
+    return {h: n for h, n in counts.items() if h not in known}
+        
 counts, per_row = get_command_count(PATH)
+
+unknown = non_evaluated_commands(counts, RISK)
+for h, n in sorted(unknown.items(), key=lambda p: -p[1]):
+    if n >= 20:
+        print(f"{h:24}           {n:6}")
+        
+junk = sum(1 for n in unknown.values() if n <= 2)
+print(f"{junk}/{len(unknown)} unclassified heads appear ≤2 times")
 
 # --------------------------- prelim summary stats --------------------------- #
 

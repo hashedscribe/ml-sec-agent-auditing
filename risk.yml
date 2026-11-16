@@ -1,7 +1,70 @@
-network:    [curl, wget, nc, ssh, scp, rsync, ftp]
-install:    [pip, pip3, npm, apt, apt-get, yum, brew, conda, poetry, uv]
-privilege:  [sudo, su, chmod, chown, chgrp, setcap]
-destructive: [rm, dd, mkfs, shred, truncate]
-execmeta:   [eval, exec, source, xargs, env]
-publish:    [git]
-interpreter: [python, python3, node, sh, bash, perl, ruby]
+# Commands by what capability they grant, not by name.
+# Used to classify observed Bash heads from agent traces.
+
+read_local:
+  # Read files and directory structure inside the workspace.
+  # Low risk on their own; the risk is what they read, which needs path rules.
+  [cat, head, tail, less, more, ls, find, stat, readlink, pwd, file, wc, du, tree]
+
+search:
+  # Read file contents by pattern. Same exposure as read_local.
+  [grep, egrep, fgrep, rg, ack, comm, diff, sort, uniq, cut, tr, column]
+
+write_local:
+  # Create or modify files. Scope depends entirely on target path.
+  [touch, mkdir, cp, tee, split]
+
+destructive:
+  # Remove or overwrite in place. Irreversible.
+  [rm, rmdir, mv, dd, shred, truncate, mkfs]
+
+interpreter:
+  # Executes arbitrary code. Cannot be constrained by prefix rules at all.
+  # This is the structural hole in any allowlist.
+  # sed and awk are in interpreter, not search. 
+  # Both are full programming languages — sed -i writes files in place, awk has system().
+  [python, python3, sh, bash, zsh, node, perl, ruby, php, awk, sed, eval, source]
+
+build:
+  # Compiles and runs build scripts; make and cmake execute arbitrary commands.
+  [make, cmake, gcc, g++, cc, clang, ld, ninja, meson, bazel, flatc]
+
+inspect_binary:
+  # Read compiled artifacts. Low risk, but useful signal for reverse-engineering.
+  [objdump, nm, readelf, strings, ldd, file, size]
+
+encode:
+  # Transform or package data. Exfiltration-adjacent when paired with network.
+  [base64, xxd, od, gzip, gunzip, tar, zip, unzip, md5sum, sha256sum, openssl]
+
+test_lint:
+  # Project tooling. Runs project code, so inherits interpreter risk via plugins.
+  [pytest, tox, coverage, flake8, black, ruff, mypy, isort, pylint, pre-commit, nose]
+
+vcs:
+  # Read is harmless; push, remote, config are not. Needs subcommand rules.
+  [git, hg, svn]
+
+install:
+  # Fetches and executes remote code. Network plus arbitrary execution.
+  [pip, pip3, npm, yarn, pnpm, apt, apt-get, yum, dnf, brew, conda, poetry, uv, gem, cargo]
+
+network:
+  # Reaches outside the sandbox.
+  [curl, wget, nc, ncat, ssh, scp, sftp, rsync, ftp, telnet, dig, nslookup, ping]
+
+privilege:
+  # Changes who can do what.
+  [sudo, su, chmod, chown, chgrp, setcap, umask]
+
+process:
+  # Observe or kill processes.
+  [ps, kill, pkill, killall, top, nice, sleep, timeout]
+
+shell_meta:
+  # Wrappers that hide the real command from prefix matching.
+  [env, exec, xargs, nohup, command, which, type, export, ln]
+
+benign:
+  # No capability of their own.
+  [echo, printf, true, false, date, basename, dirname, seq, yes]
