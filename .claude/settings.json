@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "deny": [
+      "Bash(ncat:*)",
+      "Bash(sudo:*)",
+      "Bash(telnet:*)",
+      "Bash(umask:*)",
+      "Bash(git reset:*)",
+      "Bash(git rebase:*)",
+      "Bash(git cherry-pick:*)",
+      "Bash(pip freeze:*)",
+      "Bash(pip check:*)",
+      "Bash(pip uninstall:*)"
+    ],
+    "ask": [
+      "Bash(apt:*)",
+      "Bash(apt-get:*)",
+      "Bash(cargo:*)",
+      "Bash(chmod:*)",
+      "Bash(env:*)",
+      "Bash(export:*)",
+      "Bash(nc:*)",
+      "Bash(nohup:*)",
+      "Bash(npm:*)",
+      "Bash(pip3:*)",
+      "Bash(rm:*)",
+      "Bash(su:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git checkout:*)",
+      "Bash(git stash:*)",
+      "Bash(git clean:*)",
+      "Bash(git merge:*)",
+      "Bash(git mv:*)",
+      "Bash(git rm:*)"
+    ],
+    "allow": [
+    ],
+    "defaultMode": "allow"
+  }
+}
