@@ -1,6 +1,10 @@
 # Commands by what capability they grant, not by name.
 # Used to classify observed Bash heads from agent traces.
 
+shell_builtin:
+  # Change shell state. Grant nothing on their own.
+  [cd, pushd, popd, set, unset, shift, read, trap, wait]
+
 read_local:
   # Read files and directory structure inside the workspace.
   # Low risk on their own; the risk is what they read, which needs path rules.

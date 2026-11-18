@@ -6,7 +6,7 @@ import yaml
 RISK = yaml.safe_load(open("./risk.yml"))
 
 PATH = "samples/sample_v2.0_claudecode.jsonl"
-THRESH = 0.90
+THRESH = 0.95
 
 # splits commands that are joint with &&, ||, etc.
 SEPS = re.compile(r"&&|\|\||[;|]")
@@ -74,12 +74,8 @@ def heads(cmd):
 
 def get_command_count(path):
     rows = [json.loads(l) for l in open(path, encoding="utf-8")]
-    print(f"{len(rows)} rows")
-
-    # faster than plain dict for large datasets
     counts = Counter()
     per_row = []
-
     for row in rows:
         seen = set()
         for cmd in bash_commands(row):
@@ -88,7 +84,7 @@ def get_command_count(path):
                 seen.add(h)
         if seen:
             per_row.append(len(seen))
-    return (counts, per_row)
+    return counts, per_row, rows
 
 def non_sorted_commands(counts, risk):
     known = {c for cmds in risk.values() for c in cmds}
@@ -100,7 +96,20 @@ def sorted_commands(counts, risk):
         for cat, cmds in risk.items()
     }
         
-counts, per_row = get_command_count(PATH)
+def subcommand_profile(rows, target):
+    prof = Counter()
+    for row in rows:
+        for cmd in bash_commands(row):
+            for seg in SEPS.split(cmd):
+                parts = seg.split()
+                while parts and ("=" in parts[0] or parts[0] in PREFIX):
+                    parts = parts[1:]
+                if parts and parts[0] == target:
+                    sub = parts[1] if len(parts) > 1 else "(bare)"
+                    prof[sub.lstrip("-") if sub.startswith("--") else sub] += 1
+    return prof
+
+counts, per_row, rows = get_command_count(PATH)
 
 # ----------------------------- missing commands ----------------------------- #
 
@@ -123,23 +132,33 @@ for cat, cmds in RISK.items():
         if n == 0:
              free_deny.append(c)
         
-print("\n",free_deny,"\n")
-    
+print("\nCommands listed but can be excluded:",free_deny,"\n")
+
+for head in ("git", "pip", "rm", "python", "make"):
+    prof = subcommand_profile(rows, head)
+    tot = sum(prof.values())
+    if not tot:
+        continue
+    top5 = sum(n for _, n in prof.most_common(5))
+    print(f"{head:8} {len(prof):4} distinct subcommands, "
+          f"top 5 cover {top5/tot:.0%}, {prof.most_common(5)}")
+
+
 
 # --------------------------- prelim summary stats --------------------------- #
 
-total = sum(counts.values())
-print(f"{total} commands, {len(counts)} distinct heads\n")
+# total = sum(counts.values())
+# print(f"{total} commands, {len(counts)} distinct heads\n")
 
-# get the 30 most common commands and percentage
-for h, n in counts.most_common(30):
-    print(f"{h:28} {n:7}  ({n/total:.1%})")
+# # get the 30 most common commands and percentage
+# for h, n in counts.most_common(30):
+#     print(f"{h:28} {n:7}  ({n/total:.1%})")
 
-run = 0
-for i, (_, n) in enumerate(counts.most_common(), 1):
-    run += n
-    if run / total >= THRESH:
-        print(f"\n{i} heads cover {THRESH * 100}%")
-        break
+# run = 0
+# for i, (_, n) in enumerate(counts.most_common(), 1):
+#     run += n
+#     if run / total >= THRESH:
+#         print(f"\n{i} heads cover {THRESH * 100}%")
+#         break
 
-print(f"median distinct heads per session: {median(per_row):.0f} of {len(counts)}")
+# print(f"median distinct heads per session: {median(per_row):.0f} of {len(counts)}")
