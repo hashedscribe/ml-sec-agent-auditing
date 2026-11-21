@@ -52,10 +52,18 @@ def segments(cmd):
         if part and "\n" not in part:
             yield part
 
-def heads(cmd):
+def flatten(cmd):
+    """Cut heredoc bodies and surface commands nested in $(...) or backticks,
+    so `echo $(curl x)` counts curl. Claude Code applies deny/ask rules to
+    nested commands too, so the trace analysis should see them."""
     m = HEREDOC.search(cmd)
     if m:
         cmd = cmd[:m.start()]
+    return cmd.replace("$(", ";").replace("`", ";")
+
+
+def heads(cmd):
+    cmd = flatten(cmd)
     for seg in SEPS.split(cmd):
         if "\n" in seg:
             continue
@@ -96,15 +104,43 @@ def sorted_commands(counts, risk):
         for cat, cmds in risk.items()
     }
         
+# global options that take a separate argument, e.g. `git -C dir status`
+GLOBAL_OPT_ARG = {
+    "git": {"-C", "-c", "--git-dir", "--work-tree", "--namespace",
+            "--exec-path", "--super-prefix"},
+}
+
+
+def subcommand_of(head, args):
+    """First real subcommand in args, skipping global options.
+    `git -C dir --no-pager status` -> 'status'. No subcommand -> '(bare)'."""
+    skip = GLOBAL_OPT_ARG.get(head, set())
+    i = 0
+    while i < len(args):
+        a = args[i]
+        if a in skip:
+            i += 2
+        elif a.startswith("-"):
+            i += 1
+        else:
+            return a
+    return "(bare)"
+
+
 def subcommand_profile(rows, target):
     prof = Counter()
     for row in rows:
         for cmd in bash_commands(row):
-            for seg in SEPS.split(cmd):
+            # same flattening as heads(), so text inside a heredoc body is not
+            # counted as a command and nested commands are
+            for seg in SEPS.split(flatten(cmd)):
+                if "\n" in seg:
+                    continue
                 parts = seg.split()
                 while parts and ("=" in parts[0] or parts[0] in PREFIX):
                     parts = parts[1:]
+                if parts and parts[0] == "timeout":
+                    parts = parts[2:]
                 if parts and parts[0] == target:
-                    sub = parts[1] if len(parts) > 1 else "(bare)"
-                    prof[sub.lstrip("-") if sub.startswith("--") else sub] += 1
+                    prof[subcommand_of(target, parts[1:])] += 1
     return prof
